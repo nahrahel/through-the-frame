@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="A night museum you walk through by scrolling: a rendered film with an original score, and six painting rooms from Botticelli to Munch.">
+<meta property="og:title" content="Through the Frame">
+<meta property="og:description" content="Six masterpieces, 1484 to 1893: a film with an original score and a museum you explore by scrolling.">
+<meta property="og:image" content="poster.jpg">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0c0f0e">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='3' width='26' height='26' fill='none' stroke='%23c7a056' stroke-width='4'/%3E%3C/svg%3E">
+<title>Through the Frame</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500;1,600&family=Instrument+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a night museum you walk through by scrolling. Entrance hall, screening room, six painting rooms
+   (each a pinned scene the camera explores as you scroll), and a closing salon. One dark world by design. */
+:root{
+  color-scheme:dark;
+  --night:#0c0f0e; --wall:#171c19; --ink:#ede8dd; --muted:#a3a79f; --line:#2d3530;
+  --gilt:#c7a056; --gilt-hi:#ecd391; --gilt-lo:#6f5221; --brass:#3a3122;
+  --tint:#1c2320; --spill:#55606a;
+  --display:"Cormorant Garamond","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"DM Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--night);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:clip}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--night)}
+a{color:inherit}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gilt-hi);outline-offset:3px}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1180px;margin:0 auto}
+.eyebrow{margin:0;font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--gilt)}
+
+/* ambient layer shared by the whole walk */
+#ambient{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(80% 70% at 50% 40%,color-mix(in srgb,var(--tint) 75%,transparent),transparent 75%),var(--night);transition:background 1.2s ease}
+#motes{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+main,header,footer{position:relative;z-index:2}
+
+/* top bar and rail */
+.top{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);z-index:30;transition:background .4s,border-color .4s;border-bottom:1px solid transparent}
+.top.solid{background:color-mix(in srgb,var(--night) 86%,transparent);backdrop-filter:blur(8px);border-color:var(--line)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:12px}
+.brand{font-family:var(--display);font-style:italic;font-size:22px;font-weight:500;text-decoration:none}
+.brand b{font-weight:600;color:var(--gilt-hi)}
+.nav{display:flex;gap:4px 18px;flex-wrap:wrap;font-size:13px}
+.nav a{text-decoration:none;color:var(--muted)}
+.nav a:hover{color:var(--ink)}
+.rail{position:fixed;right:max(14px,env(safe-area-inset-right,0px));top:50%;transform:translateY(-50%);z-index:25;display:flex;flex-direction:column;gap:12px;align-items:flex-end}
+.rail a{display:flex;align-items:center;gap:10px;text-decoration:none;font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:transparent;transition:color .3s}
+.rail a i{display:block;width:8px;height:8px;border-radius:50%;border:1px solid var(--gilt);background:transparent;transition:background .3s,transform .3s}
+.rail a:hover,.rail a:focus-visible{color:var(--muted)}
+.rail a.on i{background:var(--gilt-hi);transform:scale(1.35)}
+@media (max-width:900px){.rail{display:none}}
+
+/* 1 · entrance */
+.entrance{height:230vh;position:relative}
+.entrance .pin{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;display:grid;place-items:center}
+.ent-frame{position:absolute;inset:12vh 10vw;pointer-events:none}
+.ent-frame svg{width:100%;height:100%;overflow:visible}
+.ent-frame rect{fill:none;stroke:var(--gilt);stroke-width:2;stroke-dasharray:4000;stroke-dashoffset:4000;animation:draw 2.6s ease forwards .2s;filter:drop-shadow(0 0 8px rgba(236,211,145,.5))}
+@keyframes draw{to{stroke-dashoffset:0}}
+.slices{position:absolute;inset:18vh 16vw;display:flex;gap:1vw;justify-content:center;align-items:stretch}
+.slice{flex:1 1 0;min-width:0;overflow:hidden;position:relative;box-shadow:0 30px 50px -20px #000;will-change:transform,opacity}
+.slice img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.62) saturate(.9)}
+.ent-text::before{content:"";position:absolute;inset:-40px -60px;z-index:-1;background:radial-gradient(closest-side,rgba(6,8,7,.72),transparent)}
+.ent-text{position:relative;z-index:3;text-align:center;padding-inline:16px;will-change:transform,opacity}
+.ent-text h1{font-family:var(--display);font-weight:500;font-size:clamp(52px,9vw,128px);line-height:.92;margin:.1em 0;letter-spacing:-.01em;text-shadow:0 4px 40px rgba(0,0,0,.85)}
+.ent-text h1 em{color:var(--gilt-hi)}
+.ent-text p{margin:0 auto;max-width:46ch;font-size:16px;color:#e4dfd3;text-shadow:0 2px 16px #000}
+.cue{position:absolute;bottom:5vh;left:50%;transform:translateX(-50%);z-index:3;font:500 11.5px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--muted);display:grid;justify-items:center;gap:8px}
+.cue::after{content:"";width:1px;height:38px;background:linear-gradient(var(--gilt),transparent);animation:cue 1.8s ease-in-out infinite}
+@keyframes cue{0%,100%{transform:scaleY(.4);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}}
+
+/* 2 · screening room */
+.hall{position:relative;padding-block:96px 0;scroll-margin-top:0}
+.hall-head{text-align:center;max-width:60ch;margin:0 auto}
+.hall-head h2{font-family:var(--display);font-weight:500;font-size:clamp(36px,5vw,60px);line-height:1;margin:.15em 0 .2em}
+.hall-head p{margin:0;color:var(--muted)}
+.stage{position:relative;max-width:1060px;margin:44px auto 0;transition:transform .6s ease}
+.stage::before{content:"";position:absolute;left:32%;right:32%;top:-26px;height:7px;border-radius:4px;background:linear-gradient(var(--brass),#16130e)}
+.stage::after{content:"";position:absolute;left:10%;right:10%;top:-20px;height:60%;pointer-events:none;background:radial-gradient(50% 60% at 50% 0%,rgba(255,231,180,.16),transparent 70%)}
+.frame{position:relative;padding:clamp(8px,1.4vw,18px);background:linear-gradient(135deg,#5c431a,#e4c47d 16%,#a07a36 38%,#f0d796 52%,#8a6729 74%,#4f3913);
+  box-shadow:0 0 0 1px #2d220f,0 40px 70px -30px rgba(0,0,0,.95),0 0 140px -20px color-mix(in srgb,var(--spill) 75%,transparent);transition:box-shadow 1s}
+.frame::after{content:"";position:absolute;inset:clamp(8px,1.4vw,18px);box-shadow:inset 0 0 0 2px rgba(0,0,0,.55),inset 0 0 18px rgba(0,0,0,.7);pointer-events:none;z-index:3}
+.screen{position:relative;aspect-ratio:16/9;background:#050606;overflow:hidden}
+.screen video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .25s linear}
+.screen video.on{opacity:1}
+.poster{position:absolute;inset:0;z-index:2;border:0;padding:0;cursor:pointer;background:#050606 center/cover no-repeat;display:grid;place-items:center}
+.poster[hidden]{display:none!important}
+.poster span{display:inline-flex;align-items:center;gap:12px;padding:14px 24px 14px 18px;border-radius:999px;background:rgba(10,12,11,.66);border:1px solid rgba(236,211,145,.55);font-weight:500;font-size:15px;backdrop-filter:blur(4px)}
+.poster svg{width:22px;height:22px;fill:var(--gilt-hi)}
+.poster:hover span{background:rgba(10,12,11,.84)}
+.loading{position:absolute;right:12px;top:10px;z-index:2;font:500 11px var(--mono);color:var(--muted);background:rgba(0,0,0,.5);padding:4px 8px;border-radius:999px}
+.console{max-width:1000px;margin:26px auto 0;display:grid;gap:12px}
+.bar{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;padding:10px 14px;border-radius:12px;background:linear-gradient(180deg,#26221a,#18160f);border:1px solid #3d3423;box-shadow:inset 0 1px 0 rgba(255,236,190,.08),0 18px 30px -18px #000}
+.btn{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:50%;border:1px solid #4a3f29;background:#1d1a13;cursor:pointer;flex:none}
+.btn:hover{border-color:var(--gilt)}
+.btn svg{width:18px;height:18px;fill:var(--ink)}
+.btn.big{width:46px;height:46px;background:linear-gradient(180deg,#d8b66c,#9c7631);border-color:#e6cd8f}
+.btn.big svg{fill:#1a140a;width:20px;height:20px}
+.time{font-family:var(--mono);font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.time b{color:var(--ink);font-weight:500}
+.scrub{position:relative;flex:1 1 240px;min-width:0;height:34px;cursor:pointer;touch-action:none}
+.track{position:absolute;left:0;right:0;top:14px;height:6px;border-radius:3px;display:flex;overflow:hidden;background:#0c0b08}
+.track i{display:block;height:100%;opacity:.55;border-right:1px solid #0c0b08}
+.fill{position:absolute;left:0;top:14px;height:6px;border-radius:3px;background:linear-gradient(90deg,var(--gilt),var(--gilt-hi));pointer-events:none}
+.knob{position:absolute;top:9px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:var(--gilt-hi);box-shadow:0 0 0 3px rgba(0,0,0,.45);pointer-events:none}
+.tip{position:absolute;bottom:34px;transform:translateX(-50%);white-space:nowrap;font:500 11.5px var(--mono);background:#0c0b08;border:1px solid #4a3f29;padding:4px 8px;border-radius:6px;pointer-events:none}
+.vol{display:flex;align-items:center;gap:8px}
+.vol input{width:86px;accent-color:var(--gilt)}
+.now{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 18px;align-items:baseline;padding:4px 6px;min-height:68px}
+.now .lab{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gilt)}
+.now .ttl{font-family:var(--display);font-style:italic;font-size:26px;line-height:1.1}
+.now .ttl small{font-family:var(--body);font-style:normal;font-size:13.5px;color:var(--muted);margin-left:8px}
+.now .cap{grid-column:2;color:#d6d2c8;font-size:15px;max-width:70ch}
+.keys{font-family:var(--mono);font-size:11.5px;color:var(--muted);text-align:center;margin:0}
+.keys kbd{font-family:inherit;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;color:var(--ink)}
+.floor{position:relative;height:120px;margin-top:40px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.02) 0 2px,transparent 2px 120px),linear-gradient(180deg,#2a2017,#0f0c09);border-top:6px solid #0b0907;box-shadow:inset 0 30px 40px -20px rgba(0,0,0,.8)}
+.floor::before{content:"";position:absolute;left:50%;top:0;width:min(70%,820px);height:100%;transform:translateX(-50%);background:radial-gradient(50% 60% at 50% 0%,color-mix(in srgb,var(--spill) 34%,transparent),transparent 80%)}
+.bench{position:absolute;left:50%;top:32px;width:min(48%,520px);height:22px;transform:translateX(-50%);background:linear-gradient(#3a2c1e,#20180f);border-radius:4px;box-shadow:0 18px 20px -10px #000}
+.bench::before,.bench::after{content:"";position:absolute;bottom:-36px;width:10px;height:36px;background:#181109}
+.bench::before{left:8%}.bench::after{right:8%}
+.stage:fullscreen{display:grid;place-items:center;background:#000;max-width:none}
+.stage:fullscreen .frame{width:min(100vw,177.78vh);padding:0;background:none;box-shadow:none}
+.stage:fullscreen .frame::after,.stage:fullscreen::before,.stage:fullscreen::after{display:none}
+
+/* 3 · the walk */
+.walk-intro{padding-block:110px 40px;text-align:center}
+.walk-intro h2{font-family:var(--display);font-weight:500;font-size:clamp(36px,5vw,60px);line-height:1;margin:.15em 0 .25em}
+.walk-intro p{margin:0 auto;max-width:54ch;color:var(--muted)}
+.scene{position:relative;height:460vh}
+.scene .pin{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden}
+.scene .room-wall{position:absolute;inset:0;background:radial-gradient(70% 65% at 40% 45%,color-mix(in srgb,var(--room) 32%,#141816),#0b0d0c 85%)}
+.scene .lamp{position:absolute;transition:opacity .3s;height:6px;border-radius:3px;background:linear-gradient(var(--brass),#16130e);z-index:2;transform-origin:0 0}
+.cam{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;z-index:1}
+.cam img{display:block;width:100%;height:100%}
+.cam::before{content:"";position:absolute;inset:-14px;z-index:-1;background:linear-gradient(135deg,#5c431a,#e4c47d 16%,#a07a36 38%,#f0d796 52%,#8a6729 74%,#4f3913);box-shadow:0 0 0 1px #2d220f,0 40px 70px -24px rgba(0,0,0,.95)}
+.cam::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 2px rgba(0,0,0,.5),inset 0 0 14px rgba(0,0,0,.6);pointer-events:none}
+.scene canvas.fx{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
+.shade{position:absolute;inset:auto 0 0 0;height:44%;z-index:3;pointer-events:none;background:linear-gradient(transparent,rgba(5,6,6,.82));opacity:0;transition:opacity .4s}
+.r-title{position:absolute;z-index:4;right:max(6vw,env(safe-area-inset-right,0px));top:50%;transform:translateY(-50%);max-width:min(30vw,400px);display:grid;gap:6px}
+.r-title .num{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--gilt)}
+.r-title h3{margin:0;font-family:var(--display);font-style:italic;font-weight:500;font-size:clamp(34px,4.2vw,58px);line-height:1}
+.r-title .who{color:var(--muted);font-size:15px}
+.r-title .scroll-hint{margin-top:10px;font:500 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.cap{position:absolute;z-index:4;left:max(5vw,env(safe-area-inset-left,0px));bottom:7vh;max-width:min(760px,86vw);display:grid;gap:6px}
+.cap .h{font:600 12.5px var(--mono);letter-spacing:.2em;color:var(--gilt-hi)}
+.cap .b{font-family:var(--display);font-style:italic;font-size:clamp(22px,2.6vw,34px);line-height:1.18;text-shadow:0 2px 18px #000}
+.label{position:absolute;z-index:4;right:max(5vw,env(safe-area-inset-right,0px));top:50%;transform:translateY(-50%);width:min(30vw,380px);display:grid;gap:6px}
+.label .num{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--gilt)}
+.label .art{font-weight:600}
+.label h3{margin:0;font-family:var(--display);font-style:italic;font-weight:500;font-size:clamp(30px,3vw,42px);line-height:1.05}
+.label .meta{color:var(--muted);font-size:13.5px}
+.label .where a{text-decoration-color:var(--gilt);text-underline-offset:3px}
+.label .note{color:#d9d4c9;font-size:15px;margin:6px 0 8px}
+.label .acts{display:flex;flex-wrap:wrap;gap:10px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;border:1px solid #6b5630;background:#1d1a13;cursor:pointer;font-size:13.5px;font-weight:500;text-decoration:none}
+.pill:hover{border-color:var(--gilt-hi)}
+.pill.gold{background:linear-gradient(180deg,#d8b66c,#9c7631);color:#1a140a;border-color:#e6cd8f}
+.fade{opacity:0;transition:opacity .45s ease,transform .45s ease}
+.fade.show{opacity:1}
+.prog{position:absolute;z-index:4;left:max(5vw,env(safe-area-inset-left,0px));top:calc(env(safe-area-inset-top,0px) + 76px);display:flex;gap:6px}
+.prog i{width:22px;height:3px;background:rgba(255,255,255,.16);border-radius:2px;overflow:hidden;position:relative}
+.prog i b{position:absolute;inset:0;background:var(--gilt-hi);transform-origin:0 0;transform:scaleX(0)}
+@media (max-width:820px){
+  .r-title{left:max(16px,env(safe-area-inset-left,0px));right:auto;top:auto;bottom:6vh;transform:none;max-width:86vw}
+  .label{left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));width:auto;top:auto;bottom:4vh;transform:none;background:rgba(8,10,9,.78);padding:14px;border:1px solid var(--line);backdrop-filter:blur(6px)}
+  .label .note{display:none}
+  .cap{bottom:5vh}
+}
+
+/* 4 · salon */
+.salon{padding-block:110px 40px}
+.salon-head{text-align:center;max-width:62ch;margin:0 auto 46px}
+.salon-head h2{font-family:var(--display);font-weight:500;font-size:clamp(36px,5vw,60px);line-height:1;margin:.15em 0 .25em}
+.salon-head p{margin:0;color:var(--muted)}
+.salon-wall{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:56px 44px;align-items:center;max-width:1100px;margin:0 auto}
+.s-art{display:grid;justify-items:center;gap:12px;border:0;background:none;padding:0;cursor:pointer;color:inherit;transition:transform .4s ease}
+.s-art .fr{display:block;padding:8px;background:linear-gradient(135deg,var(--gilt-lo),var(--gilt-hi) 30%,var(--gilt) 55%,var(--gilt-lo));box-shadow:0 26px 40px -18px #000}
+.s-art img{display:block;max-width:100%;max-height:240px;width:auto;height:auto}
+.s-art:hover{transform:translateY(-6px)}
+.s-art .t{font-family:var(--display);font-style:italic;font-size:21px;line-height:1.1}
+.s-art .w{font-size:13px;color:var(--muted);margin-top:-8px}
+@media (max-width:820px){.salon-wall{grid-template-columns:repeat(2,minmax(0,1fr));gap:36px 18px}.s-art img{max-height:170px}}
+.sec{padding-block:80px;border-top:1px solid var(--line)}
+.sec-head{max-width:70ch;margin-bottom:30px;display:grid;gap:8px}
+.sec-head h2{font-family:var(--display);font-weight:500;font-size:clamp(30px,4vw,46px);line-height:1.05;margin:0}
+.sec-head p{margin:0;color:var(--muted)}
+.about{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:22px 34px}
+.about h3{margin:0 0 6px;font:500 13px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--gilt)}
+.about p{margin:0;color:#d4d0c6;max-width:60ch}
+.note-box{margin-top:28px;padding:16px 18px;border:1px solid #4a3f29;background:#17140e;border-radius:4px;color:#e2dccd;max-width:90ch}
+.note-box strong{color:var(--gilt-hi);font-weight:600}
+.coll-wrap{overflow-x:auto}
+.coll{width:100%;border-collapse:collapse;font-size:14px;min-width:680px}
+.coll th{text-align:left;font:500 11.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--line)}
+.coll td{padding:10px;border-bottom:1px solid #1e2421;vertical-align:baseline}
+.coll td.t{font-family:var(--display);font-style:italic;font-size:19px;line-height:1.15}
+.coll td.d{font-family:var(--mono);font-size:12.5px;color:var(--muted);white-space:nowrap}
+.coll .chip{display:inline-block;margin-left:8px;font:500 10.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#1a140a;background:var(--gilt);padding:2px 6px;border-radius:999px;vertical-align:middle;font-style:normal}
+.coll a{text-decoration-color:var(--gilt);text-underline-offset:3px}
+.coll td.l{white-space:nowrap}
+.coll td.l a+a{margin-left:12px}
+footer{padding-block:34px 70px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+
+/* floating mini player */
+.mini-player{position:fixed;z-index:35;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translate(-50%,140%);display:flex;align-items:center;gap:12px;padding:8px 10px 8px 16px;border-radius:999px;background:rgba(20,18,13,.92);border:1px solid #4a3f29;box-shadow:0 18px 40px -12px #000;backdrop-filter:blur(8px);transition:transform .4s ease;max-width:calc(100vw - 32px)}
+.mini-player.show{transform:translate(-50%,0)}
+.mini-player .mt{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.mini-player .mt b{font-family:var(--display);font-style:italic;font-size:17px;font-weight:500}
+.mini-player .btn{width:34px;height:34px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}.ent-frame rect{stroke-dashoffset:0}}
+</style>
+<style>html,body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+<div id="ambient" aria-hidden="true"></div>
+<canvas id="motes" aria-hidden="true"></canvas>
+
+<header class="top gut" id="top">
+  <div class="wrap">
+    <a class="brand" href="#entrance">Through the <b>Frame</b></a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#film">Film</a><a href="#walk">Rooms</a><a href="#salon">Salon</a><a href="#making">How it was made</a>
+    </nav>
+  </div>
+</header>
+<nav class="rail" id="rail" aria-label="Your place in the museum"></nav>
+
+<main>
+<section class="entrance" id="entrance" aria-label="Entrance">
+  <div class="pin">
+    <div class="slices" id="slices"></div>
+    <div class="ent-frame" aria-hidden="true"><svg preserveAspectRatio="none" viewBox="0 0 1000 600"><rect x="1" y="1" width="998" height="598" vector-effect="non-scaling-stroke"/></svg></div>
+    <div class="ent-text" id="entText">
+      <p class="eyebrow">A museum at night · six paintings · 1484 – 1893</p>
+      <h1>Through the <em>Frame</em></h1>
+      <p>Watch the film, then walk the rooms yourself. Every painting opens up as you scroll.</p>
+    </div>
+    <div class="cue">Scroll to enter</div>
+  </div>
+</section>
+
+<section class="hall gut" id="film" aria-label="Screening room">
+  <div class="hall-head">
+    <p class="eyebrow">The screening room</p>
+    <h2>The film</h2>
+    <p>Four and a half minutes, six paintings, one original score. The room takes its light from the screen.</p>
+  </div>
+  <div class="stage" id="stage">
+    <div class="frame">
+      <div class="screen" id="screen">
+        <video id="vA" muted playsinline preload="auto"></video>
+        <video id="vB" muted playsinline preload="auto"></video>
+        <button class="poster" id="poster" type="button" style="background-image:url(poster.jpg)" aria-label="Play the film">
+          <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>Play the film · 4:26 · sound on</span>
+        </button>
+        <span class="loading" id="loading" hidden>Loading…</span>
+      </div>
+    </div>
+  </div>
+  <div class="console">
+    <div class="bar" role="group" aria-label="Playback controls">
+      <button class="btn" id="prev" type="button" aria-label="Previous painting"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+      <button class="btn big" id="play" type="button" aria-label="Play"><svg viewBox="0 0 24 24" id="playIcon"><path d="M7 4.5v15l13-7.5z"/></svg></button>
+      <button class="btn" id="next" type="button" aria-label="Next painting"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+      <span class="time" id="time"><b>0:00</b> / 4:26</span>
+      <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="Seek" aria-valuemin="0" aria-valuemax="266" aria-valuenow="0" aria-valuetext="0:00">
+        <div class="track" id="track"></div><div class="fill" id="fill" style="width:0"></div><div class="knob" id="knob" style="left:0"></div><div class="tip" id="tip" hidden></div>
+      </div>
+      <div class="vol">
+        <button class="btn" id="mute" type="button" aria-label="Mute"><svg viewBox="0 0 24 24" id="volIcon"></svg></button>
+        <input id="volume" type="range" min="0" max="1" step="0.01" value="0.85" aria-label="Volume">
+      </div>
+      <button class="btn" id="fs" type="button" aria-label="Full screen"><svg viewBox="0 0 24 24"><path d="M4 4h6v2H6v4H4zm10 0h6v6h-2V6h-4zM4 14h2v4h4v2H4zm14 4v-4h2v6h-6v-2z"/></svg></button>
+    </div>
+    <div class="now" aria-live="polite">
+      <span class="lab" id="nowLab">Now showing</span>
+      <span class="ttl" id="nowTtl">Through the Frame <small>Overture</small></span>
+      <span class="cap" id="nowCap">Press play, or keep scrolling to walk the rooms.</span>
+    </div>
+    <p class="keys"><kbd>Space</kbd> play · <kbd>←</kbd><kbd>→</kbd> 5 s · <kbd>[</kbd><kbd>]</kbd> painting · <kbd>M</kbd> mute · <kbd>F</kbd> full screen</p>
+  </div>
+  <div class="floor" aria-hidden="true"><div class="bench"></div></div>
+  <audio id="score" preload="auto" src="score.mp3"></audio>
+</section>
+
+<section class="walk-intro gut" id="walk">
+  <p class="eyebrow">The galleries</p>
+  <h2>Walk the six rooms</h2>
+  <p>Each room holds one painting. Scroll slowly: the camera leans in to three details, then steps back so you can see the whole work and its wall label.</p>
+</section>
+<div id="scenes"></div>
+
+<section class="salon gut" id="salon">
+  <div class="salon-head">
+    <p class="eyebrow">The salon</p>
+    <h2>All six, together</h2>
+    <p>Painted over four centuries and now spread across five cities. Choose one to watch its chapter of the film.</p>
+  </div>
+  <div class="salon-wall" id="salonWall"></div>
+</section>
+
+<section class="sec gut" id="making">
+  <div class="wrap">
+    <div class="sec-head"><span class="eyebrow">How it was made</span><h2>A rendered film, not a slideshow</h2></div>
+    <div class="about">
+      <div><h3>Picture</h3><p>The film was rendered frame by frame at 1280 × 720 and 24 frames per second from the six images you supplied. A virtual camera glides, pushes in and pulls back across each painting, and each work gets its own motion. Van Gogh's sky turns and his stars pulse. Hokusai's sea heaves, Munch's sunset ripples, Zephyr's roses drift and Vermeer's pearl catches the light.</p></div>
+      <div><h3>Sound</h3><p>The score was synthesized note by note for this film from soft pads, plucked strings and bell tones in a hall reverb. Each painting has its own key and texture: a lute for Botticelli, glass bells for Vermeer, koto-like runs and surf for Hokusai, swirling arpeggios for Van Gogh and a rising dissonance for Munch. A chime marks every caption and a low bloom marks every reveal.</p></div>
+      <div><h3>The walk</h3><p>The rooms on this page follow the same camera paths as the film, but your scrolling drives them. The light, petals, stars, spray and heat haze in each room are drawn live in your browser on top of the real painting.</p></div>
+    </div>
+    <p class="note-box"><strong>Limits worth knowing.</strong> Nothing in the paintings was repainted or generated by AI. All the motion comes from moving and gently warping the real images. Only the six paintings supplied for this project appear in the film; the other works in the collection below link out to their full images. The page streams the film as eight chapter files that play in sync with one continuous score, so it starts quickly. The Scream image used here is 500 pixels wide, so its close-ups are softer than the others. <a href="downloads/through-the-frame.mp4" download>Download the whole film</a> (MP4, 4:26).</p>
+  </div>
+</section>
+
+<section class="sec gut" id="collection">
+  <div class="wrap">
+    <div class="sec-head"><span class="eyebrow">The wider collection</span><h2>Thirty-two masterpieces</h2><p>The six in the film, plus the rest of the canon we started from. Image links open the full-resolution file on Wikimedia Commons.</p></div>
+    <div class="coll-wrap"><table class="coll" id="coll"><thead><tr><th>Work</th><th>Artist</th><th>Date</th><th>Where</th><th>Links</th></tr></thead><tbody></tbody></table></div>
+  </div>
+</section>
+</main>
+
+<footer class="gut"><div class="wrap">Paintings by Sandro Botticelli, Leonardo da Vinci, Johannes Vermeer, Katsushika Hokusai, Vincent van Gogh and Edvard Munch, all in the public domain. Titles, dates and collections come from Wikipedia and Wikidata. The animation and score were made for this page.</div></footer>
+
+<div class="mini-player" id="miniPlayer" role="region" aria-label="Film playing">
+  <span class="mt" id="miniTitle"><b>Through the Frame</b></span>
+  <button class="btn" id="miniPlay" type="button" aria-label="Pause"><svg viewBox="0 0 24 24" id="miniIcon"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg></button>
+  <a class="pill" href="#film">Back to the film</a>
+</div>
+
+<script>
+const DATA = {"works":[{"id":"venus-de-milo","title":"Venus de Milo","artist":"Attributed to Alexandros of Antioch","date":"c. 150–125 BC","medium":"Parian marble · 2.04 m tall","m":"louvre","room":"Room 345","wiki":"Venus_de_Milo","file":"https://commons.wikimedia.org/wiki/File:Front_views_of_the_Venus_de_Milo.jpg","note":"Found on the Greek island of Milos in 1820. Her missing arms have kept scholars guessing for two centuries.","era":0,"kind":"sculpture"},{"id":"qingming","title":"Along the River During the Qingming Festival","artist":"Zhang Zeduan","date":"Early 12th century","medium":"Ink and color on silk handscroll · 24.8 × 528.7 cm","m":"palace","wiki":"Along_the_River_During_the_Qingming_Festival","file":"https://commons.wikimedia.org/wiki/File:Bianjing_city_gate.JPG","note":"A handscroll more than five meters long, crowded with over 800 people going about daily life in the Song dynasty capital.","era":0,"kind":"paper"},{"id":"arnolfini","title":"Arnolfini Portrait","artist":"Jan van Eyck","date":"1434","medium":"Oil on oak panel · 82.2 × 60 cm","m":"ng","wiki":"Arnolfini_Portrait","file":"https://commons.wikimedia.org/wiki/File:The_Arnolfini_portrait_(1434).jpg","note":"A small convex mirror on the back wall reflects two more figures in the doorway, and the artist signed the wall above it.","era":0,"kind":"painting"},{"id":"birth-of-venus","title":"The Birth of Venus","artist":"Sandro Botticelli","date":"c. 1484–1486","medium":"Tempera on canvas · 172.5 × 278.9 cm","m":"uffizi","wiki":"The_Birth_of_Venus","file":"https://commons.wikimedia.org/wiki/File:Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg","note":"The goddess of love comes ashore on a scallop shell, a landmark revival of classical myth in Medici Florence.","era":0,"kind":"painting"},{"id":"garden-of-earthly-delights","title":"The Garden of Earthly Delights","artist":"Hieronymus Bosch","date":"c. 1490–1510","medium":"Oil on oak panels · 205.5 × 384.9 cm","m":"prado","wiki":"The_Garden_of_Earthly_Delights","file":"https://commons.wikimedia.org/wiki/File:The_Garden_of_earthly_delights.jpg","note":"Three hinged panels show Eden, a garden of earthly pleasure and a nightmarish hell, filled with strange hybrid creatures.","era":0,"kind":"painting"},{"id":"last-supper","title":"The Last Supper","artist":"Leonardo da Vinci","date":"c. 1495–1498","medium":"Tempera and oil on gesso (mural) · 460 × 880 cm","m":"grazie","room":"Refectory","wiki":"The_Last_Supper_(Leonardo)","file":"https://commons.wikimedia.org/wiki/File:The_Last_Supper_-_Leonardo_Da_Vinci_-_High_Resolution_32x16.jpg","note":"Captures the moment after Jesus says one of the apostles will betray him. Leonardo's experimental technique began flaking within his lifetime.","era":0,"kind":"mural"},{"id":"pieta","title":"Pietà","artist":"Michelangelo","date":"1498–1499","medium":"Carrara marble · 174 × 195 cm","m":"stpeters","wiki":"Pietà_(Michelangelo)","file":"https://commons.wikimedia.org/wiki/File:Pieta_de_Michelangelo_-_Vaticano.jpg","note":"Carved when Michelangelo was in his early twenties. It is the only work he ever signed, across Mary's sash.","era":0,"kind":"sculpture"},{"id":"david","title":"David","artist":"Michelangelo","date":"1501–1504","medium":"Carrara marble · 5.17 m tall","m":"accademia","wiki":"David_(Michelangelo)","file":"https://commons.wikimedia.org/wiki/File:'David'_by_Michelangelo_Fir_JBU004.jpg","note":"Carved from a single block of marble that two earlier sculptors had given up on.","era":0,"kind":"sculpture"},{"id":"mona-lisa","title":"Mona Lisa","artist":"Leonardo da Vinci","date":"c. 1503–1519","medium":"Oil on poplar panel · 77 × 53 cm","m":"louvre","room":"Salle des États","wiki":"Mona_Lisa","file":"https://commons.wikimedia.org/wiki/File:Mona_Lisa.jpg","note":"The most visited painting on Earth. It was stolen from the Louvre in 1911 and recovered two years later in Florence.","era":0,"kind":"painting"},{"id":"creation-of-adam","title":"The Creation of Adam","artist":"Michelangelo","date":"c. 1508–1512","medium":"Fresco · 280 × 570 cm","m":"vatican","room":"Sistine Chapel ceiling","wiki":"The_Creation_of_Adam","file":"https://commons.wikimedia.org/wiki/File:Michelangelo_-_Creation_of_Adam_(cropped).jpg","note":"The almost-touching fingers of God and Adam are among the most reproduced images in history.","era":0,"kind":"mural"},{"id":"school-of-athens","title":"The School of Athens","artist":"Raphael","date":"1509–1511","medium":"Fresco · 500 × 770 cm","m":"vatican","room":"Raphael Rooms","wiki":"The_School_of_Athens","file":"https://commons.wikimedia.org/wiki/File:%22The_School_of_Athens%22_by_Raffaello_Sanzio_da_Urbino.jpg","note":"Plato and Aristotle stand at the center of a crowd of ancient thinkers. Plato is often said to have Leonardo's face.","era":0,"kind":"mural"},{"id":"night-watch","title":"The Night Watch","artist":"Rembrandt van Rijn","date":"1642","medium":"Oil on canvas · 379.5 × 453.5 cm","m":"rijks","room":"Gallery of Honour","wiki":"The_Night_Watch","file":"https://commons.wikimedia.org/wiki/File:La_ronda_de_noche%2C_por_Rembrandt_van_Rijn.jpg","note":"A militia company in motion, lit like a stage. The canvas was trimmed on all four sides in 1715 to fit a wall in Amsterdam's town hall.","era":1,"kind":"painting"},{"id":"las-meninas","title":"Las Meninas","artist":"Diego Velázquez","date":"1656","medium":"Oil on canvas · 318 × 276 cm","m":"prado","wiki":"Las_Meninas","file":"https://commons.wikimedia.org/wiki/File:Las_Meninas%2C_by_Diego_Vel%C3%A1zquez%2C_from_Prado_in_Google_Earth.jpg","note":"Velázquez painted himself at work, while the king and queen appear only as a reflection in the mirror behind him.","era":1,"kind":"painting"},{"id":"girl-with-a-pearl-earring","title":"Girl with a Pearl Earring","artist":"Johannes Vermeer","date":"c. 1665","medium":"Oil on canvas · 44.5 × 39 cm","m":"mauritshuis","wiki":"Girl_with_a_Pearl_Earring","file":"https://commons.wikimedia.org/wiki/File:1665_Girl_with_a_Pearl_Earring.jpg","note":"A tronie, a study of a face and costume rather than a portrait of a known sitter. Who she was is still unknown.","era":1,"kind":"painting"},{"id":"third-of-may","title":"The Third of May 1808","artist":"Francisco Goya","date":"1814","medium":"Oil on canvas · 268 × 347 cm","m":"prado","wiki":"The_Third_of_May_1808","file":"https://commons.wikimedia.org/wiki/File:El_Tres_de_Mayo%2C_by_Francisco_de_Goya%2C_from_Prado_thin_black_margin.jpg","note":"French soldiers execute Madrid civilians by lantern light. Goya's image set the template for modern anti-war art.","era":1,"kind":"painting"},{"id":"wanderer","title":"Wanderer above the Sea of Fog","artist":"Caspar David Friedrich","date":"c. 1818","medium":"Oil on canvas · 94.8 × 74.8 cm","m":"kunsthalle","wiki":"Wanderer_above_the_Sea_of_Fog","file":"https://commons.wikimedia.org/wiki/File:Caspar_David_Friedrich_-_Wanderer_above_the_Sea_of_Fog.jpeg","note":"A lone figure seen from behind looks out over mist and peaks. It became the emblem of German Romanticism.","era":1,"kind":"painting"},{"id":"raft-of-the-medusa","title":"The Raft of the Medusa","artist":"Théodore Géricault","date":"1818–1819","medium":"Oil on canvas · 491 × 716 cm","m":"louvre","room":"Salle Mollien (Room 700)","wiki":"The_Raft_of_the_Medusa","file":"https://commons.wikimedia.org/wiki/File:JEAN_LOUIS_TH%C3%89ODORE_G%C3%89RICAULT_-_La_Balsa_de_la_Medusa_(Museo_del_Louvre%2C_1818-19).jpg","note":"Based on a real 1816 shipwreck scandal. Géricault interviewed survivors and studied corpses to get the details right.","era":1,"kind":"painting"},{"id":"liberty-leading-the-people","title":"Liberty Leading the People","artist":"Eugène Delacroix","date":"1830","medium":"Oil on canvas · 260 × 325 cm","m":"louvre","room":"Salle Mollien (Room 700)","wiki":"Liberty_Leading_the_People","file":"https://commons.wikimedia.org/wiki/File:La_Libert%C3%A9_guidant_le_peuple_-_Eug%C3%A8ne_Delacroix_-_Mus%C3%A9e_du_Louvre_Peintures_RF_129_-_apr%C3%A8s_restauration_2024.jpg","note":"Marianne, the symbol of France, leads Parisians over the barricades of the July Revolution. The image shown is from after its 2024 restoration.","era":1,"kind":"painting"},{"id":"great-wave","title":"The Great Wave off Kanagawa","artist":"Katsushika Hokusai","date":"c. 1831","medium":"Woodblock print on paper · 25.7 × 37.9 cm","m":"met","room":"one of many impressions","wiki":"The_Great_Wave_off_Kanagawa","file":"https://commons.wikimedia.org/wiki/File:Tsunami_by_hokusai_19th_century.jpg","note":"Printed in large editions, so surviving impressions are held by museums from Tokyo to London. Hokusai was about seventy when he made it.","era":1,"kind":"paper"},{"id":"impression-sunrise","title":"Impression, Sunrise","artist":"Claude Monet","date":"1872","medium":"Oil on canvas · 48 × 63 cm","m":"marmottan","wiki":"Impression,_Sunrise","file":"https://commons.wikimedia.org/wiki/File:Monet_-_Impression%2C_Sunrise.jpg","note":"A critic mocked its title after the 1874 exhibition, and the name Impressionism stuck.","era":2,"kind":"painting"},{"id":"grande-jatte","title":"A Sunday Afternoon on the Island of La Grande Jatte","artist":"Georges Seurat","date":"1884–1886","medium":"Oil on canvas · 207.5 × 308.1 cm","m":"aic","wiki":"A_Sunday_Afternoon_on_the_Island_of_La_Grande_Jatte","file":"https://commons.wikimedia.org/wiki/File:A_Sunday_on_La_Grande_Jatte%2C_Georges_Seurat%2C_1884.jpg","note":"Seurat spent two years building this riverside scene from tiny dots of pure color, the technique known as pointillism.","era":2,"kind":"painting"},{"id":"sunflowers","title":"Sunflowers","artist":"Vincent van Gogh","date":"1888","medium":"Oil on canvas · 92.1 × 73 cm","m":"ng","wiki":"Sunflowers_(Van_Gogh_series)","file":"https://commons.wikimedia.org/wiki/File:Vincent_Willem_van_Gogh_127.jpg","note":"Painted in Arles to decorate the room of his friend Gauguin. Other versions hang in Amsterdam, Munich, Philadelphia and Tokyo.","era":2,"kind":"painting"},{"id":"starry-night","title":"The Starry Night","artist":"Vincent van Gogh","date":"1889","medium":"Oil on canvas · 73.7 × 92.1 cm","m":"moma","wiki":"The_Starry_Night","file":"https://commons.wikimedia.org/wiki/File:Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg","note":"Painted at the asylum in Saint-Rémy from the view outside his window, with the village added from imagination.","era":2,"kind":"painting"},{"id":"the-scream","title":"The Scream","artist":"Edvard Munch","date":"1893","medium":"Oil, tempera and pastel on cardboard · 91 × 73.5 cm","m":"oslo","wiki":"The_Scream","file":"https://commons.wikimedia.org/wiki/File:Edvard_Munch%2C_1893%2C_The_Scream%2C_oil%2C_tempera_and_pastel_on_cardboard%2C_91_x_73_cm%2C_National_Gallery_of_Norway.jpg","note":"Munch made several versions in paint and pastel. This 1893 painting is the best known; others belong to Oslo's Munch Museum.","era":2,"kind":"painting"},{"id":"the-thinker","title":"The Thinker","artist":"Auguste Rodin","date":"1880, enlarged 1904","medium":"Bronze · monumental version about 1.85 m tall","m":"rodin","room":"garden","wiki":"The_Thinker","file":"https://commons.wikimedia.org/wiki/File:Le_Penseur_by_Rodin_(Kunsthalle_Bielefeld)_2014-04-10.JPG","note":"Conceived as Dante brooding over The Gates of Hell. More than twenty full-size bronze casts now stand around the world.","era":2,"kind":"sculpture"},{"id":"the-kiss","title":"The Kiss","artist":"Gustav Klimt","date":"1907–1908","medium":"Oil and gold leaf on canvas · 180 × 180 cm","m":"belvedere","room":"Upper Belvedere","wiki":"The_Kiss_(Klimt)","file":"https://commons.wikimedia.org/wiki/File:The_Kiss_-_Gustav_Klimt_-_Google_Cultural_Institute.jpg","note":"The high point of Klimt's Golden Period, worked with real gold leaf. The Austrian state bought it before it was even finished.","era":2,"kind":"painting"},{"id":"water-lilies","title":"Water Lilies","artist":"Claude Monet","date":"c. 1897–1926","medium":"Oil on canvas · a series of about 250 paintings","m":"orangerie","room":"the two oval rooms","wiki":"Water_Lilies_(Monet_series)","file":"https://commons.wikimedia.org/wiki/File:Reflections_of_Clouds_on_the_Water-Lily_Pond.jpg","note":"Monet painted his pond at Giverny for three decades. In Paris, eight giant panels wrap around visitors in two oval rooms.","era":2,"kind":"painting"},{"id":"american-gothic","title":"American Gothic","artist":"Grant Wood","date":"1930","medium":"Oil on beaverboard · 78 × 65.3 cm","m":"aic","wiki":"American_Gothic","file":"https://commons.wikimedia.org/wiki/File:Grant_Wood_-_American_Gothic_(1930).jpg","note":"A farmer and his daughter outside an Iowa farmhouse. Wood's sister and his dentist posed for them.","era":3,"kind":"painting"},{"id":"persistence-of-memory","title":"The Persistence of Memory","artist":"Salvador Dalí","date":"1931","medium":"Oil on canvas · 24.1 × 33 cm","m":"moma","wiki":"The_Persistence_of_Memory","file":"https://en.wikipedia.org/wiki/File:The_Persistence_of_Memory.jpg","note":"Melting pocket watches on the Catalan coast. Visitors are often surprised by how small it is.","era":3,"kind":"painting","nf":true},{"id":"guernica","title":"Guernica","artist":"Pablo Picasso","date":"1937","medium":"Oil on canvas · 349.3 × 776.6 cm","m":"reina","wiki":"Guernica_(Picasso)","file":"https://en.wikipedia.org/wiki/File:PicassoGuernica.jpg","note":"Picasso's response to the 1937 bombing of the Basque town of Guernica, painted entirely in black, white and gray.","era":3,"kind":"painting","nf":true},{"id":"nighthawks","title":"Nighthawks","artist":"Edward Hopper","date":"1942","medium":"Oil on canvas · 84.1 × 152.4 cm","m":"aic","wiki":"Nighthawks_(Hopper)","file":"https://commons.wikimedia.org/wiki/File:Nighthawks_by_Edward_Hopper_1942.jpg","note":"Four figures under fluorescent light in a late-night diner, often read as an image of city loneliness.","era":3,"kind":"painting"},{"id":"campbells-soup-cans","title":"Campbell's Soup Cans","artist":"Andy Warhol","date":"1962","medium":"Synthetic polymer paint on 32 canvases · each 50.8 × 40.6 cm","m":"moma","wiki":"Campbell's_Soup_Cans","file":"https://commons.wikimedia.org/wiki/File:Campbell's_Soup_Cans_by_Andy_Warhol.jpg","note":"Thirty-two canvases, one for each flavor of soup Campbell's sold at the time. It helped launch Pop Art.","era":3,"kind":"painting","nf":true}],"museums":{"louvre":["Louvre","Paris","https://www.louvre.fr/"],"ng":["National Gallery","London","https://www.nationalgallery.org.uk/"],"uffizi":["Uffizi Gallery","Florence","https://www.uffizi.it/"],"accademia":["Galleria dell'Accademia","Florence","https://www.galleriaaccademiafirenze.it/"],"grazie":["Santa Maria delle Grazie","Milan","https://legraziemilano.it/"],"stpeters":["St. Peter's Basilica","Vatican City","https://www.basilicasanpietro.va/"],"vatican":["Vatican Museums","Vatican City","https://www.museivaticani.va/"],"prado":["Museo del Prado","Madrid","https://www.museodelprado.es/"],"palace":["Palace Museum","Beijing","https://www.dpm.org.cn/"],"rijks":["Rijksmuseum","Amsterdam","https://www.rijksmuseum.nl/"],"mauritshuis":["Mauritshuis","The Hague","https://www.mauritshuis.nl/"],"kunsthalle":["Hamburger Kunsthalle","Hamburg","https://www.hamburger-kunsthalle.de/"],"met":["Metropolitan Museum of Art","New York","https://www.metmuseum.org/"],"marmottan":["Musée Marmottan Monet","Paris","https://www.marmottan.fr/"],"aic":["Art Institute of Chicago","Chicago","https://www.artic.edu/"],"moma":["Museum of Modern Art","New York","https://www.moma.org/"],"oslo":["National Museum","Oslo","https://www.nasjonalmuseet.no/"],"rodin":["Musée Rodin","Paris","https://www.musee-rodin.fr/"],"belvedere":["Belvedere","Vienna","https://www.belvedere.at/"],"orangerie":["Musée de l'Orangerie","Paris","https://www.musee-orangerie.fr/"],"reina":["Museo Reina Sofía","Madrid","https://www.museoreinasofia.es/"]},"timeline":{"total":266.0,"fps":24,"segments":[{"type":"intro","start":0.0,"dur":16.0},{"type":"move","start":16.0,"dur":38.0,"key":"venus","id":"birth-of-venus","shots":[{"title":"THE WINDS","caption":"Zephyr, the west wind, and a companion blow the goddess ashore through a shower of roses.","at":16.0},{"title":"VENUS","caption":"Her modest pose is borrowed from ancient statues of the goddess of love.","at":25.5},{"title":"THE HORA","caption":"A goddess of the seasons rushes to wrap her in a cloak embroidered with flowers.","at":35.0}],"reveal":42.5},{"type":"move","start":54.0,"dur":38.0,"key":"mona","id":"mona-lisa","shots":[{"title":"THE SMILE","caption":"Leonardo softened the corners of her mouth and eyes with a haze called sfumato, so her expression seems to shift.","at":54.0},{"title":"THE LANDSCAPE","caption":"The horizon behind her sits lower on the left than on the right.","at":63.5},{"title":"THE HANDS","caption":"The relaxed three-quarter pose with folded hands became a model for portraits.","at":73.0}],"reveal":80.5},{"type":"move","start":92.0,"dur":38.0,"key":"girl","id":"girl-with-a-pearl-earring","shots":[{"title":"THE GAZE","caption":"She turns toward us over her shoulder, lips parted, as if about to speak.","at":92.0},{"title":"THE PEARL","caption":"The pearl is little more than a bright highlight and a soft reflection of her white collar.","at":101.5},{"title":"THE TURBAN","caption":"Its blue is ultramarine, ground from lapis lazuli and once more costly than gold.","at":111.0}],"reveal":118.5},{"type":"move","start":130.0,"dur":38.0,"key":"wave","id":"great-wave","shots":[{"title":"THE CREST","caption":"The breaking crest splits into claw-like fingers of foam.","at":130.0},{"title":"MOUNT FUJI","caption":"Fuji, the subject of the whole print series, looks tiny beneath the wave.","at":139.5},{"title":"THE BOATS","caption":"Rowers bend low in long, fast boats. The deep blue is imported Prussian blue.","at":149.0}],"reveal":156.5},{"type":"move","start":168.0,"dur":38.0,"key":"starry","id":"starry-night","shots":[{"title":"THE SKY","caption":"Painted in June 1889 at the asylum in Saint-Rémy, from the view outside his window.","at":168.0},{"title":"MOON AND STARS","caption":"A blazing crescent moon and eleven stars wrapped in halos of light.","at":177.5},{"title":"THE VILLAGE","caption":"A dark cypress rises like a flame over a quiet village, which Van Gogh added from imagination.","at":187.0}],"reveal":194.5},{"type":"move","start":206.0,"dur":38.0,"key":"scream","id":"the-scream","shots":[{"title":"THE SKY","caption":"Munch remembered a walk at sunset when the sky suddenly turned blood red.","at":206.0},{"title":"THE FJORD","caption":"The road looks out over the Oslofjord, with the city below.","at":215.5},{"title":"THE FIGURE","caption":"He clutches his head against what Munch called an infinite scream passing through nature.","at":225.0}],"reveal":232.5},{"type":"outro","start":244.0,"dur":22.0}]}};
+const ART = {"venus": {"avg": "#9a8c6a", "w": 1920, "h": 1206}, "mona": {"avg": "#523918", "w": 960, "h": 1452}, "girl": {"avg": "#4c4334", "w": 1280, "h": 1516}, "wave": {"avg": "#bfc1b6", "w": 1920, "h": 1291}, "starry": {"avg": "#4c5c6e", "w": 1920, "h": 1520}, "scream": {"avg": "#7a6a5b", "w": 500, "h": 618}};
+const FILES = {intro:"film/00-intro.mp4",venus:"film/01-venus.mp4",mona:"film/02-mona.mp4",girl:"film/03-girl.mp4",wave:"film/04-wave.mp4",starry:"film/05-starry.mp4",scream:"film/06-scream.mp4",outro:"film/07-outro.mp4"};
+const TL = DATA.timeline, TOTAL = TL.total;
+const SEGS = TL.segments.map(s => ({...s, key: s.key || s.type, file: FILES[s.key || s.type]}));
+const BYID = Object.fromEntries(DATA.works.map(w => [w.id, w]));
+const MOVES = SEGS.filter(s => s.type === "move");
+const $ = s => document.querySelector(s);
+const fmt = t => { t = Math.max(0, t); return Math.floor(t / 60) + ":" + String(Math.floor(t % 60)).padStart(2, "0"); };
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const ease = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+const REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const ROMAN = ["I", "II", "III", "IV", "V", "VI"];
+const cap1 = s => s.charAt(0) + s.slice(1).toLowerCase();
+
+/* Camera paths: same details as the film. [cx, cy, view width as a fraction of the painting] */
+const SHOTS = {
+  venus:  [[0.26, 0.33, 0.40], [0.505, 0.24, 0.32], [0.80, 0.30, 0.36]],
+  mona:   [[0.50, 0.27, 0.42], [0.20, 0.39, 0.50], [0.48, 0.80, 0.58]],
+  girl:   [[0.38, 0.45, 0.46], [0.58, 0.62, 0.38], [0.72, 0.45, 0.52]],
+  wave:   [[0.45, 0.25, 0.40], [0.60, 0.66, 0.32], [0.55, 0.80, 0.55]],
+  starry: [[0.47, 0.33, 0.44], [0.86, 0.17, 0.32], [0.45, 0.80, 0.52]],
+  scream: [[0.50, 0.24, 0.90], [0.42, 0.40, 0.82], [0.48, 0.68, 0.72]]
+};
+const STARS = [[0.107,0.046],[0.234,0.026],[0.339,0.036],[0.411,0.059],[0.609,0.092],[0.237,0.168],[0.326,0.322],[0.357,0.526],[0.703,0.23],[0.044,0.454],[0.125,0.467],[0.875,0.12]];
+
+/* ================= entrance ================= */
+const SLICE_POS = {venus:"50% 40%", mona:"50% 28%", girl:"40% 45%", wave:"38% 35%", starry:"55% 30%", scream:"50% 40%"};
+$("#slices").innerHTML = MOVES.map(s => '<div class="slice"><img src="art/' + s.key + '.jpg" alt="" style="object-position:' + SLICE_POS[s.key] + '"></div>').join("");
+
+/* ================= rooms ================= */
+$("#scenes").innerHTML = MOVES.map((s, i) => {
+  const w = BYID[s.id], m = DATA.museums[w.m];
+  const caps = s.shots.map((sh, j) => '<div class="cap fade" data-cap="' + j + '"><span class="h">' + sh.title + '</span><span class="b">' + sh.caption + '</span></div>').join("");
+  return '<section class="scene" id="room-' + s.key + '" data-key="' + s.key + '" data-i="' + i + '" style="--room:' + ART[s.key].avg + '" aria-label="Room ' + ROMAN[i] + ': ' + w.title + '">' +
+    '<div class="pin"><div class="room-wall"></div><div class="lamp"></div>' +
+    '<div class="cam"><img src="art/' + s.key + '.jpg" alt="' + w.title + ' by ' + w.artist + '" decoding="async"></div>' +
+    '<canvas class="fx"></canvas><div class="shade"></div>' +
+    '<div class="prog">' + '<i><b></b></i>'.repeat(3) + '</div>' +
+    '<div class="r-title fade show"><span class="num">ROOM ' + ROMAN[i] + ' · ' + w.date.replace("c. ", "") + '</span><h3>' + w.title + '</h3><span class="who">' + w.artist + '</span><span class="scroll-hint">Keep scrolling to look closer</span></div>' +
+    caps +
+    '<div class="label fade"><span class="num">' + String(i + 1).padStart(2, "0") + ' / 06</span><span class="art">' + w.artist + '</span><h3>' + w.title + '</h3>' +
+      '<span class="meta">' + w.date + ' · ' + w.medium + '</span><span class="where"><a href="' + m[2] + '" target="_blank" rel="noopener">' + m[0] + '</a>, ' + m[1] + '</span>' +
+      '<p class="note">' + w.note + '</p><div class="acts"><button class="pill gold" type="button" data-play="' + s.key + '">Watch this room in the film</button><a class="pill" href="' + w.file + '" target="_blank" rel="noopener">Full image ↗</a></div></div>' +
+    '</div></section>';
+}).join("");
+
+const scenes = [...document.querySelectorAll(".scene")].map(el => {
+  const key = el.dataset.key, img = el.querySelector(".cam img");
+  const sc = {el, key, pin: el.querySelector(".pin"), cam: el.querySelector(".cam"), img, fx: el.querySelector("canvas.fx"),
+    title: el.querySelector(".r-title"), caps: [...el.querySelectorAll(".cap")], label: el.querySelector(".label"), shade: el.querySelector(".shade"),
+    lamp: el.querySelector(".lamp"), bars: [...el.querySelectorAll(".prog b")], iw: 1, ih: 1, p: 0, cs: null, parts: []};
+  const setSize = () => { sc.iw = img.naturalWidth || ART[key].w; sc.ih = img.naturalHeight || ART[key].h; layout(sc); };
+  if (img.complete) setSize(); else img.addEventListener("load", setSize, {once: true});
+  return sc;
+});
+
+function layout(sc){
+  const W = innerWidth, H = sc.pin.clientHeight || innerHeight, narrow = W < 820;
+  const a = ART[sc.key].w / ART[sc.key].h;
+  const bw = narrow ? W * 0.84 : W * 0.5, bh = narrow ? H * 0.5 : H * 0.7;
+  let fw = bw, fh = bw / a; if (fh > bh){ fh = bh; fw = bh * a; }
+  const cx = narrow ? W / 2 : W * 0.37, cy = narrow ? H * 0.38 : H * 0.5;
+  sc.f = {W, H, fw, fh, left: cx - fw / 2, top: cy - fh / 2};
+  sc.cam.style.width = fw + "px"; sc.cam.style.height = fh + "px";
+  sc.cam.style.left = sc.f.left + "px"; sc.cam.style.top = sc.f.top + "px";
+  sc.lamp.style.left = (cx - fw * 0.18) + "px"; sc.lamp.style.width = (fw * 0.36) + "px"; sc.lamp.style.top = (sc.f.top - 34) + "px";
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  sc.fx.width = W * dpr; sc.fx.height = H * dpr; sc.fx.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0);
+  sc.parts = [];
+}
+addEventListener("resize", () => scenes.forEach(layout));
+
+// camera keys along the scroll: framed, three details, framed again
+const KEYS = [[0, "F"], [0.1, "F"], [0.2, 0], [0.3, 0], [0.4, 1], [0.5, 1], [0.6, 2], [0.7, 2], [0.84, "F"], [1, "F"]];
+function camFor(sc, k){
+  const {W, H, fw, fh, left, top} = sc.f;
+  if (k === "F" || REDUCE) return [(W / 2 - left) / fw, (H / 2 - top) / fh, 1];
+  let [cx, cy, vw] = SHOTS[sc.key][k];
+  let s = W / (vw * fw);
+  s = Math.max(s, H / fh * 1.001, 1.4);
+  const vwf = W / (s * fw), vhf = H / (s * fh);
+  cx = clamp(cx, vwf / 2, 1 - vwf / 2); cy = clamp(cy, vhf / 2, 1 - vhf / 2);
+  return [cx, cy, s];
+}
+function camAt(sc, p){
+  for (let j = 0; j < KEYS.length - 1; j++){
+    const [pa, ka] = KEYS[j], [pb, kb] = KEYS[j + 1];
+    if (p <= pb){
+      const A = camFor(sc, ka), B = camFor(sc, kb), e = ease((p - pa) / (pb - pa || 1));
+      return [A[0] + (B[0] - A[0]) * e, A[1] + (B[1] - A[1]) * e, Math.exp(Math.log(A[2]) + (Math.log(B[2]) - Math.log(A[2])) * e)];
+    }
+  }
+  return camFor(sc, "F");
+}
+function applyCam(sc, cam){
+  const {W, H, fw, fh, left, top} = sc.f, [cx, cy, s] = cam;
+  const tx = W / 2 - left - s * cx * fw, ty = H / 2 - top - s * cy * fh;
+  sc.cam.style.transform = "translate3d(" + tx.toFixed(2) + "px," + ty.toFixed(2) + "px,0) scale(" + s.toFixed(4) + ")";
+  sc.cs = {s, ox: left + tx, oy: top + ty, fw, fh};
+  sc.lamp.style.opacity = String(clamp(1 - (s - 1) * 4, 0, 1));
+}
+const toScreen = (sc, u, v) => [sc.cs.ox + u * sc.cs.fw * sc.cs.s, sc.cs.oy + v * sc.cs.fh * sc.cs.s];
+
+function updateScene(sc){
+  const r = sc.el.getBoundingClientRect(), H = innerHeight;
+  const p = clamp(-r.top / (r.height - H), 0, 1);
+  sc.p = p; sc.visible = r.top < H && r.bottom > 0;
+  if (!sc.visible || !sc.f) return;
+  applyCam(sc, camAt(sc, p));
+  sc.title.classList.toggle("show", p < 0.12);
+  let capOn = false;
+  sc.caps.forEach((c, j) => { const on = p > 0.16 + j * 0.2 && p < 0.34 + j * 0.2; c.classList.toggle("show", on); capOn = capOn || on; });
+  sc.shade.style.opacity = capOn ? 1 : 0;
+  sc.label.classList.toggle("show", p > 0.82);
+  sc.bars.forEach((b, j) => b.style.transform = "scaleX(" + clamp((p - 0.12 - j * 0.2) / 0.2, 0, 1) + ")");
+}
+
+/* living paint drawn over each room */
+function fx(sc, t){
+  const c = sc.fx.getContext("2d"), {W, H} = sc.f;
+  c.clearRect(0, 0, W, H);
+  if (!sc.cs) return;
+  const s = sc.cs.s, k = sc.key;
+  if (k === "venus"){
+    if (!sc.parts.length) sc.parts = Array.from({length: 26}, () => ({u: Math.random() * 0.8, v: Math.random() * 0.7, ph: Math.random() * 6.28, z: 0.6 + Math.random() * 0.7}));
+    for (const q of sc.parts){
+      q.u += 0.00018 * q.z; if (q.u > 0.85){ q.u = 0.02; q.v = Math.random() * 0.6; }
+      const [x, y] = toScreen(sc, q.u, q.v + 0.02 * Math.sin(t / 1400 * q.z + q.ph) + (q.u * 0.12));
+      const rx = Math.max(2, 6 * s * q.z * sc.cs.fw / 900), ry = rx * 0.55;
+      c.save(); c.translate(x, y); c.rotate(t / 900 * q.z + q.ph);
+      c.fillStyle = "rgba(236,178,180,.85)"; c.beginPath(); c.ellipse(0, 0, rx, ry, 0, 0, 6.283); c.fill();
+      c.fillStyle = "rgba(252,220,216,.9)"; c.beginPath(); c.ellipse(0, 0, rx * .5, ry * .5, 0, 0, 6.283); c.fill();
+      c.restore();
+    }
+  } else if (k === "mona"){
+    for (let j = 0; j < 4; j++){
+      const [x, y] = toScreen(sc, ((t / 40000 + j * 0.27) % 1.2) - 0.1, 0.32 + j * 0.04);
+      const R = 180 * s * sc.cs.fw / 600;
+      const g = c.createRadialGradient(x, y, 0, x, y, R);
+      g.addColorStop(0, "rgba(206,214,180,.10)"); g.addColorStop(1, "rgba(206,214,180,0)");
+      c.fillStyle = g; c.fillRect(x - R, y - R, 2 * R, 2 * R);
+    }
+  } else if (k === "girl"){
+    const [x, y] = toScreen(sc, 0.574, 0.612);
+    const v = 0.5 + 0.5 * Math.sin(t / 900), R = Math.max(6, 14 * s * sc.cs.fw / 700);
+    const g = c.createRadialGradient(x, y, 0, x, y, R * 2.4);
+    g.addColorStop(0, "rgba(255,255,250," + (0.55 * v + 0.2) + ")"); g.addColorStop(1, "rgba(255,255,250,0)");
+    c.fillStyle = g; c.fillRect(x - R * 3, y - R * 3, R * 6, R * 6);
+    const [lx, ly] = toScreen(sc, 0.0, 0.0);
+    const beam = c.createLinearGradient(lx, ly, lx + W * 0.7, ly + H * 0.7);
+    beam.addColorStop(0, "rgba(255,238,205," + (0.05 + 0.03 * Math.sin(t / 2600)) + ")"); beam.addColorStop(1, "rgba(255,238,205,0)");
+    c.fillStyle = beam; c.fillRect(0, 0, W, H);
+  } else if (k === "wave"){
+    if (!sc.parts.length) sc.parts = Array.from({length: 70}, () => ({u: 0.36 + Math.random() * 0.26, v: 0.08 + Math.random() * 0.3, ph: Math.random() * 6.28, sp: 0.4 + Math.random()}));
+    for (const q of sc.parts){
+      const life = ((t / 1000 * q.sp * 0.35 + q.ph) % 1);
+      const [x, y] = toScreen(sc, q.u + life * 0.04, q.v - Math.sin(life * Math.PI) * 0.05);
+      c.fillStyle = "rgba(248,246,236," + (Math.sin(life * Math.PI) * 0.8) + ")";
+      c.beginPath(); c.arc(x, y, Math.max(1, 1.6 * s * sc.cs.fw / 900), 0, 6.283); c.fill();
+    }
+  } else if (k === "starry"){
+    STARS.forEach(([u, v], j) => {
+      const [x, y] = toScreen(sc, u, v), R = (j === 11 ? 70 : 34) * s * sc.cs.fw / 900;
+      const a = 0.12 + 0.16 * (0.5 + 0.5 * Math.sin(t / 700 + j * 1.9));
+      const g = c.createRadialGradient(x, y, 0, x, y, R);
+      g.addColorStop(0, "rgba(255,246,170," + a + ")"); g.addColorStop(1, "rgba(255,246,170,0)");
+      c.fillStyle = g; c.fillRect(x - R, y - R, 2 * R, 2 * R);
+    });
+  } else if (k === "scream"){
+    for (let j = 0; j < 5; j++){
+      c.beginPath();
+      for (let u = -0.05; u <= 1.05; u += 0.02){
+        const [x, y] = toScreen(sc, u, 0.06 + j * 0.07 + 0.012 * Math.sin(u * 9 + t / 700 + j));
+        u <= -0.05 ? c.moveTo(x, y) : c.lineTo(x, y);
+      }
+      c.strokeStyle = "rgba(255," + (120 + j * 18) + ",80," + (0.10 + 0.05 * Math.sin(t / 900 + j)) + ")";
+      c.lineWidth = Math.max(2, 9 * s * sc.cs.fw / 600); c.stroke();
+    }
+  }
+}
+
+/* ================= salon and collection ================= */
+$("#salonWall").innerHTML = MOVES.map(s => { const w = BYID[s.id]; return '<button class="s-art" type="button" data-play="' + s.key + '"><span class="fr"><img src="art/' + s.key + '-s.jpg" alt="" loading="lazy"></span><span class="t">' + w.title + '</span><span class="w">' + w.artist + ', ' + w.date + '</span></button>'; }).join("");
+const inFilm = new Set(MOVES.map(s => s.id));
+$("#coll tbody").innerHTML = DATA.works.map(w => {
+  const m = DATA.museums[w.m];
+  return '<tr><td class="t">' + w.title + (inFilm.has(w.id) ? '<span class="chip">In the film</span>' : "") + '</td><td>' + w.artist + '</td><td class="d">' + w.date + '</td><td>' + m[0] + ', ' + m[1] + '</td>' +
+    '<td class="l"><a href="' + w.file + '" target="_blank" rel="noopener">Image</a><a href="https://en.wikipedia.org/wiki/' + encodeURIComponent(w.wiki) + '" target="_blank" rel="noopener">Wikipedia</a></td></tr>';
+}).join("");
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-play]"); if (!b) return;
+  const s = SEGS.find(x => x.key === b.dataset.play);
+  seek(s.start + 0.05); play(); $("#film").scrollIntoView({behavior: REDUCE ? "auto" : "smooth"});
+});
+
+/* ================= rail ================= */
+const STOPS = [["entrance", "Entrance"], ["film", "Film"], ...MOVES.map((s, i) => ["room-" + s.key, ROMAN[i] + " · " + BYID[s.id].title]), ["salon", "Salon"]];
+$("#rail").innerHTML = STOPS.map(([id, label]) => '<a href="#' + id + '" data-id="' + id + '"><span>' + label + '</span><i></i></a>').join("");
+
+/* ================= the film player: one score drives eight chapter videos ================= */
+const audio = $("#score"), vids = [$("#vA"), $("#vB")];
+let active = null, playing = false, started = false;
+audio.volume = +$("#volume").value;
+const segIndexAt = t => { let i = 0; SEGS.forEach((s, j) => { if (t >= s.start - 1e-3) i = j; }); return i; };
+function load(v, idx){ if (v.dataset.seg === String(idx)) return; v.dataset.seg = idx; v.src = SEGS[idx].file; v.load(); }
+function show(v){ vids.forEach(x => x.classList.toggle("on", x === v)); }
+function setLocal(v, local){
+  const go = () => { try { v.currentTime = Math.min(local, (v.duration || 999) - 0.05); } catch (e) {} };
+  if (v.readyState >= 1) go(); else v.addEventListener("loadedmetadata", go, {once: true});
+}
+function sync(force){
+  const t = audio.currentTime, idx = segIndexAt(t), s = SEGS[idx], local = t - s.start;
+  let v = vids.find(x => x.dataset.seg === String(idx));
+  if (!v){ v = vids.find(x => x !== active) || vids[0]; load(v, idx); setLocal(v, local); }
+  if (v !== active){
+    active = v;
+    if (Math.abs(v.currentTime - local) > 0.2) setLocal(v, local);
+    if (playing) v.play().catch(() => {});
+  } else {
+    const drift = v.currentTime - local;
+    if (force || Math.abs(drift) > 0.3) setLocal(v, local);
+    else v.playbackRate = Math.abs(drift) > 0.04 ? clamp(1 - drift, 0.94, 1.06) : 1;
+    if (playing && v.paused && local < (v.duration || 99) - 0.1) v.play().catch(() => {});
+  }
+  const other = vids.find(x => x !== active);
+  if (active.readyState >= 2 && !active.classList.contains("on")){ show(active); if (other.dataset.seg !== String(idx + 1)) other.pause(); }
+  if (idx + 1 < SEGS.length && s.dur - local < 8 && other.dataset.seg !== String(idx + 1)){ load(other, idx + 1); setLocal(other, 0); other.pause(); }
+  $("#loading").hidden = !(playing && (active.readyState < 2 || audio.readyState < 3));
+}
+function play(){
+  started = true; $("#poster").hidden = true; playing = true;
+  audio.play().then(() => sync(true)).catch(() => { playing = false; ui(); });
+  sync(true); ui();
+}
+function pause(){ playing = false; audio.pause(); vids.forEach(v => v.pause()); ui(); }
+function seek(t){ t = clamp(t, 0, TOTAL - 0.05); audio.currentTime = t; if (!started){ $("#poster").hidden = true; started = true; } sync(true); ui(); }
+audio.addEventListener("ended", pause);
+audio.addEventListener("seeked", () => sync(true));
+setInterval(() => { if (!playing && active && active.readyState >= 2 && !active.classList.contains("on")) sync(false); }, 200);
+
+let lastSeg = -1, lastKey = "";
+function ui(){
+  const t = audio.currentTime, idx = segIndexAt(t), s = SEGS[idx];
+  $("#time").innerHTML = "<b>" + fmt(t) + "</b> / " + fmt(TOTAL);
+  const pc = t / TOTAL * 100; $("#fill").style.width = pc + "%"; $("#knob").style.left = pc + "%";
+  const sc = $("#scrub"); sc.setAttribute("aria-valuenow", t.toFixed(0)); sc.setAttribute("aria-valuetext", fmt(t));
+  const icon = playing ? '<path d="M6 4h4v16H6zm8 0h4v16h-4z"/>' : '<path d="M7 4.5v15l13-7.5z"/>';
+  $("#playIcon").innerHTML = icon; $("#miniIcon").innerHTML = icon;
+  $("#play").setAttribute("aria-label", playing ? "Pause" : "Play"); $("#miniPlay").setAttribute("aria-label", playing ? "Pause" : "Play");
+  if (idx !== lastSeg){ lastSeg = idx; if (inHall) document.documentElement.style.setProperty("--tint", ART[s.key] ? ART[s.key].avg : "#1c2320"); }
+  let lab = "Now showing", ttl, cap, mini;
+  if (s.type === "move"){
+    const w = BYID[s.id], m = DATA.museums[w.m], shot = [...s.shots].reverse().find(x => t >= x.at - 0.01);
+    ttl = w.title + " <small>" + w.artist + ", " + w.date + "</small>"; mini = w.title;
+    if (t >= s.reveal){ lab = "The whole painting"; cap = w.medium + ". " + m[0] + ", " + m[1] + "."; }
+    else { lab = cap1(shot.title); cap = shot.caption; }
+  } else if (s.type === "intro"){ ttl = "Through the Frame <small>Overture</small>"; cap = "Six masterpieces, from Florence in 1484 to Oslo in 1893."; mini = "Overture"; }
+  else { ttl = "Through the Frame <small>Finale</small>"; cap = "All six hang together. Find them in Florence, Paris, The Hague, New York and Oslo."; mini = "Finale"; }
+  const key = idx + lab;
+  if (key !== lastKey){ lastKey = key; $("#nowLab").textContent = lab; $("#nowTtl").innerHTML = ttl; $("#nowCap").textContent = cap; $("#miniTitle").innerHTML = "<b>" + mini + "</b> · " + lab; }
+}
+$("#poster").addEventListener("click", play);
+$("#play").addEventListener("click", () => playing ? pause() : play());
+$("#miniPlay").addEventListener("click", () => playing ? pause() : play());
+$("#screen").addEventListener("click", e => { if (!e.target.closest("#poster")) playing ? pause() : play(); });
+const chapterJump = dir => {
+  const t = audio.currentTime, idx = segIndexAt(t);
+  const target = dir < 0 ? (t - SEGS[idx].start > 3 ? idx : Math.max(0, idx - 1)) : Math.min(SEGS.length - 1, idx + 1);
+  seek(SEGS[target].start + 0.05);
+};
+$("#prev").addEventListener("click", () => chapterJump(-1));
+$("#next").addEventListener("click", () => chapterJump(1));
+const VOL_ON = '<path d="M4 9v6h4l5 4V5L8 9zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/>';
+const VOL_OFF = '<path d="M4 9v6h4l5 4V5L8 9zm12.6 3 2.7-2.7-1.4-1.4-2.7 2.7-2.7-2.7-1.4 1.4 2.7 2.7-2.7 2.7 1.4 1.4 2.7-2.7 2.7 2.7 1.4-1.4z"/>';
+function volUI(){ $("#mute").setAttribute("aria-label", audio.muted ? "Unmute" : "Mute"); $("#volIcon").innerHTML = audio.muted ? VOL_OFF : VOL_ON; }
+volUI();
+$("#volume").addEventListener("input", e => { audio.volume = +e.target.value; audio.muted = audio.volume === 0; volUI(); });
+$("#mute").addEventListener("click", () => { audio.muted = !audio.muted; volUI(); });
+$("#fs").addEventListener("click", () => {
+  const st = $("#stage");
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  else if (st.requestFullscreen) st.requestFullscreen().catch(() => {});
+  else if (active && active.webkitEnterFullscreen) active.webkitEnterFullscreen();
+});
+$("#track").innerHTML = SEGS.map(s => '<i style="width:' + (s.dur / TOTAL * 100) + '%;background:' + (ART[s.key] ? ART[s.key].avg : "#5a5446") + '"></i>').join("");
+const scrub = $("#scrub"), tip = $("#tip");
+const tAt = x => { const r = scrub.getBoundingClientRect(); return clamp((x - r.left) / r.width, 0, 1) * TOTAL; };
+let dragging = false;
+scrub.addEventListener("pointerdown", e => { dragging = true; scrub.setPointerCapture(e.pointerId); seek(tAt(e.clientX)); });
+scrub.addEventListener("pointermove", e => {
+  const t = tAt(e.clientX), s = SEGS[segIndexAt(t)];
+  tip.hidden = false; tip.textContent = fmt(t) + " · " + (s.type === "move" ? BYID[s.id].title : s.type === "intro" ? "Overture" : "Finale");
+  tip.style.left = (t / TOTAL * 100) + "%"; if (dragging) seek(t);
+});
+scrub.addEventListener("pointerup", () => { dragging = false; });
+scrub.addEventListener("pointerleave", () => { tip.hidden = true; });
+scrub.addEventListener("keydown", e => {
+  const map = {ArrowRight: 5, ArrowLeft: -5};
+  if (e.key in map){ seek(audio.currentTime + map[e.key]); e.preventDefault(); }
+  if (e.key === "Home"){ seek(0); e.preventDefault(); } if (e.key === "End"){ seek(TOTAL - 1); e.preventDefault(); }
+});
+document.addEventListener("keydown", e => {
+  if (e.target.closest("input, textarea") || e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (k === "k" || (k === " " && !e.target.closest("button, a"))){ if (!started && !inHall) return; playing ? pause() : play(); e.preventDefault(); }
+  else if (k === "arrowright" && !e.target.closest("#scrub") && inHall) seek(audio.currentTime + 5);
+  else if (k === "arrowleft" && !e.target.closest("#scrub") && inHall) seek(audio.currentTime - 5);
+  else if (k === "]") chapterJump(1); else if (k === "[") chapterJump(-1);
+  else if (k === "m"){ audio.muted = !audio.muted; volUI(); }
+  else if (k === "f" && inHall) $("#fs").click();
+});
+
+/* the screen lights the room */
+const probe = document.createElement("canvas"); probe.width = 8; probe.height = 5;
+const pctx = probe.getContext("2d", {willReadFrequently: true});
+let spill = [85, 96, 106];
+setInterval(() => {
+  if (!inHall || !active || active.readyState < 2) return;
+  try {
+    pctx.drawImage(active, 0, 0, 8, 5);
+    const d = pctx.getImageData(0, 0, 8, 5).data; let r = 0, g = 0, b = 0;
+    for (let i = 0; i < d.length; i += 4){ r += d[i]; g += d[i + 1]; b += d[i + 2]; }
+    const n = d.length / 4; spill = [r / n, g / n, b / n];
+    document.documentElement.style.setProperty("--spill", "rgb(" + spill.map(Math.round).join(",") + ")");
+  } catch (e) {}
+}, 300);
+
+/* ================= the scroll engine ================= */
+let inHall = false;
+const hall = $("#film"), slices = [...document.querySelectorAll(".slice")], entText = $("#entText"), ent = $("#entrance");
+const motes = $("#motes"), mctx = motes.getContext("2d");
+let dust = [];
+function sizeDust(){
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  motes.width = innerWidth * dpr; motes.height = innerHeight * dpr; mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  dust = Array.from({length: Math.round(innerWidth / 16)}, () => ({x: Math.random() * innerWidth, y: Math.random() * innerHeight, z: 0.3 + Math.random() * 0.9, p: Math.random() * 6.28}));
+}
+sizeDust(); addEventListener("resize", sizeDust);
+let lastY = scrollY, tintNow = "#1c2320";
+
+function frame(t){
+  const H = innerHeight, y = scrollY, vel = y - lastY; lastY = y;
+  // entrance: slices fan out and fall away, title lifts
+  const er = ent.getBoundingClientRect(), ep = clamp(-er.top / (er.height - H), 0, 1);
+  if (er.bottom > 0){
+    slices.forEach((el, i) => {
+      const off = i - (slices.length - 1) / 2, e = REDUCE ? 0 : ease(ep * 1.25);
+      el.style.transform = "translate3d(" + (off * e * 12) + "vw," + (Math.abs(off) * e * 6 - e * 4) + "vh,0) rotate(" + (off * e * 6) + "deg) scale(" + (1 + e * 0.15) + ")";
+      el.style.opacity = String(1 - ease((ep - 0.45) / 0.4) * 0.9);
+    });
+    entText.style.transform = "translateY(" + (-ep * 18) + "vh)"; entText.style.opacity = String(1 - ease((ep - 0.35) / 0.35));
+  }
+  $("#top").classList.toggle("solid", y > H * 0.6);
+  // the scene tinting the whole museum
+  let tint = "#1c2320";
+  const hr = hall.getBoundingClientRect();
+  inHall = hr.top < H * 0.6 && hr.bottom > H * 0.4;
+  if (inHall){ const s = SEGS[segIndexAt(audio.currentTime)]; tint = ART[s.key] ? ART[s.key].avg : "#1c2320"; }
+  scenes.forEach(sc => { updateScene(sc); if (sc.visible){ fx(sc, t); const r = sc.el.getBoundingClientRect(); if (r.top < H * 0.5 && r.bottom > H * 0.5) tint = ART[sc.key].avg; } });
+  if (tint !== tintNow){ tintNow = tint; document.documentElement.style.setProperty("--tint", tint); }
+  // rail
+  let current = STOPS[0][0];
+  STOPS.forEach(([id]) => { const el = document.getElementById(id); if (el && el.getBoundingClientRect().top < H * 0.5) current = id; });
+  document.querySelectorAll(".rail a").forEach(a => a.classList.toggle("on", a.dataset.id === current));
+  // floating mini player
+  $("#miniPlayer").classList.toggle("show", playing && !(hr.top < H && hr.bottom > 0));
+  if (playing) { sync(false); ui(); }
+  // dust drifts, and swirls a little when you scroll
+  mctx.clearRect(0, 0, innerWidth, innerHeight);
+  const [R, G, B] = (inHall ? spill : [200, 186, 150]).map(v => Math.min(255, v * 0.55 + 115));
+  for (const m of dust){
+    if (!REDUCE){ m.y -= 0.08 * m.z + vel * 0.04 * m.z; m.x += Math.sin(t / 3000 + m.p) * 0.12 * m.z; }
+    if (m.y < -6) m.y = innerHeight + 6; if (m.y > innerHeight + 6) m.y = -6;
+    const lit = Math.max(0, 1 - Math.hypot((m.x / innerWidth - 0.5) * 1.6, (m.y / innerHeight - 0.42) * 1.8));
+    mctx.fillStyle = "rgba(" + (R | 0) + "," + (G | 0) + "," + (B | 0) + "," + ((0.04 + 0.4 * lit) * (0.6 + 0.4 * Math.sin(t / 900 + m.p))) + ")";
+    mctx.beginPath(); mctx.arc(m.x, m.y, 0.6 + 1.2 * m.z, 0, 6.283); mctx.fill();
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* first chapter ready */
+load(vids[0], 0); active = vids[0]; vids[0].addEventListener("loadeddata", () => show(vids[0]), {once: true});
+if (location.hash){ const el = document.getElementById(location.hash.slice(1)); if (el) setTimeout(() => el.scrollIntoView(), 60); }
+ui();
+</script>
+
+</body>
+</html>
